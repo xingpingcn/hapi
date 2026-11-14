@@ -215,6 +215,39 @@ Roll out relay support/credentials first, then the hub, then the app. Verify
 real background, lock-screen and cold-process notifications using a hub with
 no Firebase settings; test Allow/Deny/Reply and an iOS push before publishing.
 
+### Personal signed APK via GitHub Actions
+
+The `Android Self Build` workflow is for maintainers of a fork who want a
+manually built APK without publishing a GitHub Release or configuring Firebase.
+It runs only when manually dispatched from `main`, builds on a GitHub-hosted
+runner, and uploads a signed APK artifact retained for 90 days. Push
+notifications are unavailable without a Firebase configuration; pairing,
+sessions and chat are unaffected.
+
+Configure these repository Actions secrets once. Keep an encrypted offline
+backup of the keystore and its passwords; changing this key prevents Android
+from installing a later build over an existing self-built APK.
+
+| Secret | Value |
+|---|---|
+| `HAPI_SELF_BUILD_KEYSTORE_BASE64` | Base64-encoded release keystore |
+| `HAPI_SELF_BUILD_KEYSTORE_PASSWORD` | Keystore password |
+| `HAPI_SELF_BUILD_KEY_ALIAS` | Signing key alias |
+| `HAPI_SELF_BUILD_KEY_PASSWORD` | Key password |
+
+To build, open **Actions** → **Android Self Build** → **Run workflow**, choose
+`main`, enter a version name, and run it. After success, download the
+`hapi-android-<versionCode>-<commit>` artifact from that run, extract its ZIP,
+then install `app-release.apk` on Android. The artifact also includes its
+SHA-256 checksum, signing-certificate details and build metadata. GitHub sign-in
+is required to download an artifact.
+
+The build's `versionCode` is the commit count on `main`, so normal merges from
+upstream make it increase automatically. Do not rewrite `main` history. The
+first self-built install cannot replace the Play Store package because its
+signature differs; uninstall the Play version first. Subsequent self-built
+APKs produced with these same secrets install as updates.
+
 ## Release signing
 
 Builds do not require signing secrets. `:app:bundleRelease` produces an **unsigned** AAB unless an
